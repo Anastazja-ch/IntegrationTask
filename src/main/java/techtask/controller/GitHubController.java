@@ -7,13 +7,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.client.RestTemplate;
+import techtask.dto.GitHubRepoDto;
+import techtask.service.GitHubService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/github")
 public class GitHubController {
 
-    private final RestTemplate restTemplate = new RestTemplate();
 
+    private final GitHubService gitHubService;
+
+    public GitHubController(GitHubService gitHubService) {
+        this.gitHubService = gitHubService;
+    }
 
     @GetMapping("/{username}")
     public ResponseEntity<String> gettingUserRepos(@PathVariable("username") String username) {
@@ -21,12 +29,9 @@ public class GitHubController {
             return ResponseEntity.badRequest().body("Username cannot be blank");
         }
 
-        String url = "https://api.github.com/users/" + username;
-
         try {
-            restTemplate.getForObject(url, String.class);
-
-            return ResponseEntity.ok("Hello " + username);
+            List<GitHubRepoDto> repos = gitHubService.getUsersRepo(username);
+            return ResponseEntity.ok(repos.toString());
 
         } catch (RestClientResponseException e) {
 
