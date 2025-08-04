@@ -3,6 +3,7 @@ package techtask.service;
 
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import techtask.dto.GitHubBranchDto;
 import techtask.dto.GitHubRepoDto;
 
 import java.util.Arrays;
@@ -18,9 +19,23 @@ public class GitHubService {
         String url = "https://api.github.com/users/" + username + "/repos";
         GitHubRepoDto[] gitHubAllRepos = restTemplate.getForObject(url, GitHubRepoDto[].class);
 
-        return Arrays.stream(gitHubAllRepos)
+        assert gitHubAllRepos != null;
+        List<GitHubRepoDto> nonForkedRepos = Arrays.stream(gitHubAllRepos)
                 .filter(repo -> !repo.isFork())
-                .collect(Collectors.toList());
+                .toList();
+
+        for (GitHubRepoDto repo : nonForkedRepos) {
+            List<GitHubBranchDto> branches = getBranches(repo.getOwner().getLogin(), repo.getName());
+            repo.setBranches(branches);
+        }
+        return nonForkedRepos;
+    }
+
+    public List<GitHubBranchDto> getBranches(String owner, String repoName) {
+        String url = "https://api.github.com/repos/" + owner + "/" + repoName + "/branches";
+        GitHubBranchDto[] branches = restTemplate.getForObject(url, GitHubBranchDto[].class);
+        assert branches != null;
+        return Arrays.asList(branches);
 
     }
 
